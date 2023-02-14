@@ -1,2 +1,2 @@
-
-add_executable(singleList sample01.cpp)
+add_subdirectory(sample01)
+add_subdirectory(sample02)

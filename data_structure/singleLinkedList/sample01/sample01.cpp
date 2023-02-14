@@ -4,6 +4,8 @@
 
 #include "iostream"
 
+namespace sample01{
+
 typedef struct NODE {
     // 관리될 데이터
     int nData;
@@ -44,4 +46,6 @@ int main() {
     }
 
     return 0;
+}
+
 }
