@@ -72,7 +72,7 @@ namespace dll{
 
         printf("PrintList(): g_nSize: %d, g_pHead [%p], g_pTail [%p]\n", g_nSize, g_pHead, g_pTail);
         while(pTmp != nullptr){
-            printf("Prev: [%p] | Data: %s | Next: [%p]\n", pTmp->prev, pTmp->pszData,  pTmp->next);
+            printf("Prev: [%p] | Cur: [%p], Data: %s | Next: [%p]\n", pTmp->prev, pTmp, pTmp->pszData, pTmp->next);
             pTmp = pTmp->next;
         }
         std::cout << std::endl;
@@ -106,7 +106,19 @@ namespace dll{
     }
 
     int insertAtTail(const char* pszData){
-        return 0;
+        NODE* pNewNode = (NODE*) malloc(sizeof(NODE));
+        memset(pNewNode, 0, sizeof(NODE));
+        strcpy_s(pNewNode->pszData, sizeof(pNewNode->pszData), pszData);
+
+        pNewNode->next = g_pTail;
+        pNewNode->prev = g_pTail->prev;
+
+        g_pTail->prev = pNewNode;
+        pNewNode->prev->next = pNewNode;
+
+        g_nSize++;
+
+        return g_nSize;
     }
 
     int getSize(){
@@ -129,10 +141,15 @@ int main(){
     initList();
     printList();
 
-    insertAtHead("TEST01");
-    insertAtHead("TEST02");
+    //insertAtHead("TEST01");
     //insertAtHead("TEST02");
     //insertAtHead("TEST03");
+
+    insertAtTail("TEST01");
+    printList();
+    insertAtTail("TEST02");
+    //insertAtHead("TEST03");
+
     printList();
 
     releaseList();
