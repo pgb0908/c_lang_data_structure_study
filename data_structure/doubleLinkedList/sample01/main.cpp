@@ -46,19 +46,14 @@ namespace dll{
 
 
     void releaseList(){
-        NODE* pTmp = g_pHead;
+        NODE* pTmp = g_pHead->next;
 
-        while(pTmp != nullptr){
-            if(pTmp == g_pHead || pTmp == g_pTail){
-                pTmp = pTmp->next;
-                continue;
-            }else{
-                NODE* pDelete = pTmp; // back up!!
-                pTmp = pTmp->next;
+        while(pTmp != g_pTail){
+            NODE* pDelete = pTmp; // back up!!
+            pTmp = pTmp->next;
 
-                printf("free [%p], data: %s \n", pDelete, pDelete->pszData);
-                free(pDelete);
-            }
+            printf("free [%p], data: %s \n", pDelete, pDelete->pszData);
+            free(pDelete);
         }
         std::cout << std::endl;
 
@@ -79,12 +74,43 @@ namespace dll{
     }
 
     NODE* findNode(const char* pszData){
+        NODE* pTmp = g_pHead->next;
+
+        while (pTmp != g_pTail){
+            if(strcmp(pTmp->pszData, pszData)==0)
+                return pTmp;
+            pTmp = pTmp->next;
+        }
 
         return nullptr;
     }
 
+    void insertBefore(NODE *pNode, const char *data) {
+
+        NODE* pNewNode = (NODE*) malloc(sizeof(NODE));
+        memset(pNewNode, 0, sizeof(NODE));
+        strcpy_s(pNewNode->pszData, sizeof(pNewNode->pszData), data);
+
+        pNewNode->prev = pNode->prev;
+        pNewNode->next = pNode;
+
+        pNode->prev = pNewNode;
+        pNewNode->prev->next = pNewNode;
+
+        g_nSize++;
+    }
+
     int deleteNode(const char* pszData){
         NODE* pNode = findNode(pszData);
+
+        pNode->prev->next = pNode->next;
+        pNode->next->prev = pNode->prev;
+
+        printf("deleteNode: [%p], data: %s \n", pNode, pNode->pszData);
+        free(pNode);
+
+        g_nSize--;
+
         return 0;
     }
 
@@ -106,18 +132,7 @@ namespace dll{
     }
 
     int insertAtTail(const char* pszData){
-        NODE* pNewNode = (NODE*) malloc(sizeof(NODE));
-        memset(pNewNode, 0, sizeof(NODE));
-        strcpy_s(pNewNode->pszData, sizeof(pNewNode->pszData), pszData);
-
-        pNewNode->next = g_pTail;
-        pNewNode->prev = g_pTail->prev;
-
-        g_pTail->prev = pNewNode;
-        pNewNode->prev->next = pNewNode;
-
-        g_nSize++;
-
+        insertBefore(g_pTail, pszData);
         return g_nSize;
     }
 
@@ -133,23 +148,64 @@ namespace dll{
         return getSize() == 0;
     }
 
+
+    int insertAt(int idx, const char* pszData){
+        int i = 0;
+        NODE* pTmp = g_pHead->next;
+        while(pTmp != g_pTail){
+
+            if(i == idx){
+                insertBefore(pTmp, pszData);
+                return i;
+            }
+
+            pTmp = pTmp->next;
+            i++;
+        }
+        insertAtTail(pszData);
+
+        return i;
+    }
+
+
+    NODE* getAt(int idx){
+        int i = 0;
+        NODE* pTmp = g_pHead->next;
+
+        while(pTmp != g_pTail){
+            if(i == idx)
+                return pTmp;
+
+            pTmp = pTmp->next;
+            i++;
+        }
+
+        return nullptr;
+    }
+
 }
 
 int main(){
     using namespace dll;
-
     initList();
     printList();
 
-    //insertAtHead("TEST01");
-    //insertAtHead("TEST02");
-    //insertAtHead("TEST03");
-
     insertAtTail("TEST01");
-    printList();
     insertAtTail("TEST02");
+    insertAtTail("TEST03");
     //insertAtHead("TEST03");
+    printList();
 
+    insertAt(0, "TEST AT 00");
+    printList();
+
+    insertAt(2, "TEST AT 02");
+    printList();
+
+    insertAt(4, "TEST AT 04");
+    printList();
+
+    insertAt(10, "TEST AT 10");
     printList();
 
     releaseList();
