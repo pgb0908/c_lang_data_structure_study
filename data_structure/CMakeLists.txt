@@ -1,3 +1,4 @@
 add_subdirectory(function_pointer)
 add_subdirectory(recursive)
 add_subdirectory(singleLinkedList)
+add_subdirectory(doubleLinkedList)

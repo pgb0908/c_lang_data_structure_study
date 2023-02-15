@@ -60,7 +60,7 @@ namespace sample02 {
             free(pDelete);
         }
 
-        g_pHead = nullptr;
+        g_pHead->next = nullptr;
 
     }
 
