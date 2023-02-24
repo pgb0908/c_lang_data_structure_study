@@ -31,9 +31,9 @@ namespace bts01{
 
         printTree(pParent->left);
 
-        printf("Left: [%p] | Cur: [%p], Data: %s | Right: [%p]\n",
+        printf("Left: [%p] | Cur: [%p], Data: %s Parent: %p | Right: [%p]\n",
                pParent->left,
-               pParent, pParent->szData,
+               pParent, pParent->szData, pParent->parent,
                pParent->right);
 
         printTree(pParent->right);
@@ -50,8 +50,8 @@ namespace bts01{
         if(g_pRoot == nullptr){
             // 기존에 노드가 존재하지 않으면
             // 루트는 새로운 노드가 됨
+            pNewNode->parent = nullptr;
             g_pRoot = pNewNode;
-            pNewNode->parent = g_pRoot;
             return 1;
         }
 
@@ -63,6 +63,7 @@ namespace bts01{
                 // left
                 if(pTmp->left == nullptr){
                     pTmp->left = pNewNode;
+                    pNewNode->parent = pTmp;
                     break;
                 }else{
                     pTmp = pTmp->left;
@@ -72,6 +73,7 @@ namespace bts01{
                 // right
                 if(pTmp->right == nullptr){
                     pTmp->right = pNewNode;
+                    pNewNode->parent = pTmp;
                     break;
                 }else{
                     pTmp = pTmp->right;
@@ -120,35 +122,67 @@ namespace bts01{
         if(pDelete == nullptr) return 0;
 
         if(pDelete->left == nullptr && pDelete->right == nullptr){
+            auto parent_pDel = pDelete->parent;
             // 리프 노드
+
+            if(parent_pDel->left->szData == pDelete->szData){
+                parent_pDel->left = nullptr;
+            }else{
+                parent_pDel->right = nullptr;
+            }
+
             free(pDelete);
+
             return 1;
         }
 
-        if(pDelete->left != nullptr){
-            NODE* pre_rightest = pDelete->left;
-            NODE* rightest = nullptr;
-            NODE* pre_righteest_left = nullptr;
+        if(pDelete->left != nullptr) {
+            NODE *rightest = pDelete->left;
 
-            while(pre_rightest->right->right == nullptr){
-                pre_rightest = pre_rightest->right;
+            while (rightest->right != nullptr) {
+                rightest = rightest->right;
             }
 
-            if(pre_rightest->right != nullptr){
-                rightest = pre_rightest->right;
-            }else{
-                pre_righteest_left = pre_rightest->left;
-            }
-
-            if(rightest != nullptr){
+            // 생각해보기
+            if(rightest->parent->right == rightest){
+                // rightest가 delete 노드를 대신함
                 rightest->left = pDelete->left;
                 rightest->right = pDelete->right;
+
+                auto pre_rightest = rightest->parent;
                 pre_rightest->right = nullptr;
+
+                if(g_pRoot == pDelete){
+                    g_pRoot = rightest;
+                    rightest->parent = nullptr;
+                }
+
+                free(pDelete);
+
+                return 1;
+            }else{
+                // rightest가 delete 노드를 대신함
+                NODE* parent_pDelete = pDelete->parent;
+
+                if(parent_pDelete != nullptr){
+                    parent_pDelete->left = rightest;
+                    rightest->parent = parent_pDelete;
+
+                }else{
+                    g_pRoot = rightest;
+                    rightest->parent = nullptr;
+                }
+                rightest->right = pDelete->right;
+
+                free(pDelete);
+
+                return 1;
             }
+
+        }else{
+            return 0;
         }
 
-
-        return 0;
     }
 
 }
@@ -157,10 +191,17 @@ int main(){
     using namespace bts01;
 
     insertNode("5");
-    insertNode("4");
+    insertNode("3");
     insertNode("7");
-    insertNode("8");
+    insertNode("1");
+    insertNode("4");
+    insertNode("6");
+    insertNode("9");
 
+    printTree(g_pRoot);
+    std::cout << "==========================" << std::endl;
+
+    deleteNode("7");
     printTree(g_pRoot);
 
     //releaseTree(g_pRoot);
