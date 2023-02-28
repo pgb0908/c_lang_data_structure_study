@@ -122,30 +122,48 @@ namespace bts01{
         if(pDelete == nullptr) return 0;
 
         if(pDelete->left == nullptr && pDelete->right == nullptr){
-            auto parent_pDel = pDelete->parent;
             // 리프 노드
+            auto parent_pDel = pDelete->parent;
 
             if(parent_pDel->left->szData == pDelete->szData){
                 parent_pDel->left = nullptr;
             }else{
                 parent_pDel->right = nullptr;
             }
-
             free(pDelete);
-
             return 1;
         }
 
         if(pDelete->left != nullptr) {
+            // 삭제할 노드의 왼쪽편이 존재!
             NODE *rightest = pDelete->left;
 
+            // 왼쪽편 중에 가장 오른쪽!
             while (rightest->right != nullptr) {
                 rightest = rightest->right;
             }
 
-            // 생각해보기
+            // todo 1단계인지
+            if(rightest->left == nullptr && rightest->right == nullptr){
+                rightest->left = pDelete->left;
+                rightest->right = pDelete->right;
+
+                auto pre_rightest = rightest->parent;
+                pre_rightest->right = nullptr;
+
+                if(g_pRoot == pDelete){
+                    g_pRoot = rightest;
+                    rightest->parent = nullptr;
+                }
+
+                free(pDelete);
+                return 1;
+            }
+
+            // todo 2단계인지
             if(rightest->parent->right == rightest){
-                // rightest가 delete 노드를 대신함
+                // 가장 오른쪽의 노드는 이진트리에서 오른쪽편
+                //    - 이 노드를 삭제하려는 노드랑 체인지
                 rightest->left = pDelete->left;
                 rightest->right = pDelete->right;
 
@@ -161,13 +179,13 @@ namespace bts01{
 
                 return 1;
             }else{
-                // rightest가 delete 노드를 대신함
+                // 가장 오른쪽의 노드는 이진트리에서 왼쪽편
+                //    - 삭제 노드의 왼쪽 편
                 NODE* parent_pDelete = pDelete->parent;
 
                 if(parent_pDelete != nullptr){
                     parent_pDelete->left = rightest;
                     rightest->parent = parent_pDelete;
-
                 }else{
                     g_pRoot = rightest;
                     rightest->parent = nullptr;
@@ -180,6 +198,50 @@ namespace bts01{
             }
 
         }else{
+            // 삭제할 노드의 왼쪽편이 존재!
+            NODE* leftest = pDelete->right;
+
+            // 삭제 노드 오른쪽 중에 가장 왼쪽!
+            while (leftest->left != nullptr) {
+                leftest = leftest->left;
+            }
+
+            if(leftest->parent->left == leftest){
+                // 가장 왼쪽의 노드는 이진트리에서 왼쪽편
+                //    - 이 노드를 삭제하려는 노드랑 체인지
+                leftest->left = pDelete->left;
+                leftest->right = pDelete->right;
+
+                auto pre_leftest = leftest->parent;
+                pre_leftest->left = nullptr;
+
+                if(g_pRoot == pDelete){
+                    g_pRoot = leftest;
+                    leftest->parent = nullptr;
+                }
+
+                free(pDelete);
+
+                return 1;
+            }else{
+                // 가장 오른쪽의 노드는 이진트리에서 왼쪽편
+                //    - 삭제 노드의 왼쪽 편
+                NODE* parent_pDelete = pDelete->parent;
+
+                if(parent_pDelete != nullptr){
+                    parent_pDelete->right = leftest;
+                    leftest->parent = parent_pDelete;
+                }else{
+                    g_pRoot = leftest;
+                    leftest->parent = nullptr;
+                }
+                leftest->right = pDelete->right;
+
+                free(pDelete);
+
+                return 1;
+            }
+
             return 0;
         }
 
