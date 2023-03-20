@@ -111,140 +111,143 @@ namespace bts01{
         return pTmp;
     }
 
-    int deleteNode(const char* pszData){
-        // 1. 리프 노드이면 삭제
-        // 2. 리프노드가 아니면
-        //     - 삭제 노드 기준으로 왼쪽 --> 젤 오른쪽 느드가 삭제 노드 대신
-        //          - 젤 오른쪽 노드에 왼쪽 자식 노드가 있으면 재귀적으로 대처
-        //     - or, 삭제 노드 기준으로 오른쪽 --> 젤 왼쪽 노드가 삭제 노드 대신
+    int deleteLeafNode(NODE *pNode);
+    bool isLeaf(NODE *pNode);
 
+    NODE *findRightest(NODE *pNode);
+
+    int switchAndDelete(NODE *pNODE, NODE* pDelete);
+
+    NODE *findLeftest(NODE *pNode);
+
+    int deleteNode(const char* pszData){
         auto pDelete = findNode(pszData);
         if(pDelete == nullptr) return 0;
 
         if(pDelete->left == nullptr && pDelete->right == nullptr){
             // 리프 노드
-            auto parent_pDel = pDelete->parent;
-
-            if(parent_pDel->left->szData == pDelete->szData){
-                parent_pDel->left = nullptr;
-            }else{
-                parent_pDel->right = nullptr;
-            }
-            free(pDelete);
+            deleteLeafNode(pDelete);
             return 1;
-        }
+        }else if(pDelete->left != nullptr && pDelete->right == nullptr){
+            // 리프노드가 아니고 왼쪽 노드만 있는경우
+            // 왼쪽편 가장 오른쪽에 있는 놈을 삭제할 놈을 대체
 
-        if(pDelete->left != nullptr) {
-            // 삭제할 노드의 왼쪽편이 존재!
-            NODE *rightest = pDelete->left;
+            // 가장 오른쪽 검색!
+            NODE* pRightest = findRightest(pDelete);
+            int rtn = switchAndDelete(pRightest, pDelete);
 
-            // 왼쪽편 중에 가장 오른쪽!
-            while (rightest->right != nullptr) {
-                rightest = rightest->right;
-            }
+            return rtn;
 
-            // todo 1단계인지
-            if(rightest->left == nullptr && rightest->right == nullptr){
-                rightest->left = pDelete->left;
-                rightest->right = pDelete->right;
+        }else if(pDelete->left == nullptr && pDelete->right != nullptr){
+            // 리프노드가 아니고 오른쪽 노드만 있는경우
+            // 오른편 가장 왼쪽에 있는 놈을 삭제할 놈을 대체
 
-                auto pre_rightest = rightest->parent;
-                pre_rightest->right = nullptr;
+            NODE* pLeftest = findLeftest(pDelete);
+            int rtn = switchAndDelete(pLeftest, pDelete);
 
-                if(g_pRoot == pDelete){
-                    g_pRoot = rightest;
-                    rightest->parent = nullptr;
-                }
-
-                free(pDelete);
-                return 1;
-            }
-
-            // todo 2단계인지
-            if(rightest->parent->right == rightest){
-                // 가장 오른쪽의 노드는 이진트리에서 오른쪽편
-                //    - 이 노드를 삭제하려는 노드랑 체인지
-                rightest->left = pDelete->left;
-                rightest->right = pDelete->right;
-
-                auto pre_rightest = rightest->parent;
-                pre_rightest->right = nullptr;
-
-                if(g_pRoot == pDelete){
-                    g_pRoot = rightest;
-                    rightest->parent = nullptr;
-                }
-
-                free(pDelete);
-
-                return 1;
-            }else{
-                // 가장 오른쪽의 노드는 이진트리에서 왼쪽편
-                //    - 삭제 노드의 왼쪽 편
-                NODE* parent_pDelete = pDelete->parent;
-
-                if(parent_pDelete != nullptr){
-                    parent_pDelete->left = rightest;
-                    rightest->parent = parent_pDelete;
-                }else{
-                    g_pRoot = rightest;
-                    rightest->parent = nullptr;
-                }
-                rightest->right = pDelete->right;
-
-                free(pDelete);
-
-                return 1;
-            }
-
+            return rtn;
         }else{
-            // 삭제할 노드의 왼쪽편이 존재!
-            NODE* leftest = pDelete->right;
+            NODE* pRightest = findRightest(pDelete);
+            int rtn = switchAndDelete(pRightest, pDelete);
 
-            // 삭제 노드 오른쪽 중에 가장 왼쪽!
-            while (leftest->left != nullptr) {
-                leftest = leftest->left;
-            }
-
-            if(leftest->parent->left == leftest){
-                // 가장 왼쪽의 노드는 이진트리에서 왼쪽편
-                //    - 이 노드를 삭제하려는 노드랑 체인지
-                leftest->left = pDelete->left;
-                leftest->right = pDelete->right;
-
-                auto pre_leftest = leftest->parent;
-                pre_leftest->left = nullptr;
-
-                if(g_pRoot == pDelete){
-                    g_pRoot = leftest;
-                    leftest->parent = nullptr;
-                }
-
-                free(pDelete);
-
-                return 1;
-            }else{
-                // 가장 오른쪽의 노드는 이진트리에서 왼쪽편
-                //    - 삭제 노드의 왼쪽 편
-                NODE* parent_pDelete = pDelete->parent;
-
-                if(parent_pDelete != nullptr){
-                    parent_pDelete->right = leftest;
-                    leftest->parent = parent_pDelete;
-                }else{
-                    g_pRoot = leftest;
-                    leftest->parent = nullptr;
-                }
-                leftest->right = pDelete->right;
-
-                free(pDelete);
-
-                return 1;
-            }
-
-            return 0;
+            return rtn;
         }
 
+    }
+
+    NODE *findLeftest(NODE *pNode) {
+        NODE* pTemp = pNode->right;
+
+        while(!isLeaf(pTemp)){
+            if(pTemp->left != nullptr){
+                pTemp = pTemp->left;
+                continue;
+            }
+
+            if(pTemp->right != nullptr)
+                pTemp = pTemp->right;
+        }
+
+        if(pTemp != pNode->right){
+            return  pTemp;
+        }else{
+            return pNode->right;
+        }
+    }
+
+    NODE *findRightest(NODE *pNode) {
+        NODE* pTemp = pNode->left;
+
+        while(!isLeaf(pTemp)){
+            if(pTemp->right != nullptr){
+                pTemp = pTemp->right;
+                continue;
+            }
+
+            if(pTemp->left != nullptr)
+                pTemp = pTemp->left;
+        }
+
+        if(pTemp != pNode->left){
+            return  pTemp;
+        }else{
+            return pNode->left;
+        }
+    }
+
+    int switchAndDelete(NODE *pNode, NODE* pDelete) {
+        // 대상 노드의 부모 노드 관계 삭제
+        auto pNodeParent = pNode->parent;
+        if(pNodeParent->left == pNode){
+            // left
+            pNodeParent->left = nullptr;
+        }else{
+            // right
+            pNodeParent->right = nullptr;
+        }
+
+        // 삭제 노드의 부모 노드와 부모관계
+        auto pDelParent = pDelete->parent;
+        if(pDelParent == nullptr){
+            std::cout << "todo" << std::endl;
+        }else if(pDelParent->left == pDelete){
+            // left
+            pDelParent->left = pNode;
+        }else{
+            // right
+            pDelParent->right = pNode;
+        }
+        pNode->parent = pDelParent;
+
+        // 기존 노드와 삭제노드 부모관계
+        pNode->right = pDelete->right;
+        pNode->left = pDelete->left;
+
+        free(pDelete);
+        return 0;
+    }
+
+
+    bool isLeaf(NODE *pNode) {
+        if(pNode == nullptr) return false;
+
+        if(pNode->right == nullptr &&
+           pNode->left == nullptr) return true;
+
+        return false;
+    }
+
+    int deleteLeafNode(NODE *pDelete) {
+        auto parent_pDel = pDelete->parent;
+
+        if(parent_pDel->left->szData == pDelete->szData){
+            parent_pDel->left = nullptr;
+        }else{
+            parent_pDel->right = nullptr;
+        }
+        free(pDelete);
+
+        return 1;
     }
 
 }
@@ -252,18 +255,21 @@ namespace bts01{
 int main(){
     using namespace bts01;
 
-    insertNode("5");
+/*    insertNode("5");
     insertNode("3");
     insertNode("7");
     insertNode("1");
     insertNode("4");
     insertNode("6");
-    insertNode("9");
+    insertNode("9");*/
+
+    insertNode("");
+
 
     printTree(g_pRoot);
     std::cout << "==========================" << std::endl;
 
-    deleteNode("7");
+    deleteNode("1");
     printTree(g_pRoot);
 
     //releaseTree(g_pRoot);
